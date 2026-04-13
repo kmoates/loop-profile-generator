@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Loop Profile Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #2b3d4d;
+    --teal: #87d0c5;
+    --slate: #4e6376;
+    --light: #d0ecef;
+    --white: #ffffff;
+    --border: #dde4e8;
+    --error: #c0392b;
+    --success: #27ae60;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: #f0f4f6;
+    color: var(--navy);
+    min-height: 100vh;
+  }
+
+  header {
+    background: var(--navy);
+    padding: 18px 40px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    border-bottom: 3px solid var(--teal);
+  }
+
+  header h1 {
+    font-family: 'DM Serif Display', serif;
+    color: var(--white);
+    font-size: 1.3rem;
+    font-weight: 400;
+    letter-spacing: 0.02em;
+  }
+
+  header span {
+    color: var(--teal);
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-left: auto;
+  }
+
+  .container {
+    max-width: 820px;
+    margin: 40px auto;
+    padding: 0 24px 60px;
+  }
+
+  .card {
+    background: var(--white);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+    box-shadow: 0 2px 16px rgba(43,61,77,0.07);
+  }
+
+  .card-header {
+    background: var(--light);
+    padding: 20px 28px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .card-header .step {
+    background: var(--navy);
+    color: var(--white);
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  .card-header h2 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--navy);
+  }
+
+  .card-body { padding: 28px; }
+
+  .field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .field-row.single { grid-template-columns: 1fr; }
+
+  .field { display: flex; flex-direction: column; gap: 6px; }
+
+  label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--slate);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  label span { color: var(--teal); margin-left: 3px; }
+
+  input[type="text"], textarea {
+    border: 1.5px solid var(--border);
+    border-radius: 7px;
+    padding: 10px 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    color: var(--navy);
+    transition: border-color 0.2s;
+    background: #fafcfd;
+    outline: none;
+    width: 100%;
+  }
+
+  input[type="text"]:focus, textarea:focus {
+    border-color: var(--teal);
+    background: var(--white);
+  }
+
+  textarea { resize: vertical; min-height: 80px; }
+
+  .upload-zone {
+    border: 2px dashed var(--teal);
+    border-radius: 10px;
+    padding: 32px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: #f7fdfc;
+  }
+
+  .upload-zone:hover, .upload-zone.drag-over {
+    background: var(--light);
+    border-color: var(--navy);
+  }
+
+  .upload-zone .icon { font-size: 2rem; margin-bottom: 10px; }
+
+  .upload-zone p { font-size: 0.88rem; color: var(--slate); line-height: 1.5; }
+  .upload-zone strong { color: var(--navy); }
+
+  .upload-zone .file-name {
+    margin-top: 10px;
+    font-size: 0.82rem;
+    color: var(--success);
+    font-weight: 600;
+  }
+
+  #resumeInput { display: none; }
+
+  .hint { font-size: 0.78rem; color: var(--slate); margin-top: 4px; font-style: italic; }
+
+  .btn-generate {
+    width: 100%;
+    padding: 16px;
+    background: var(--navy);
+    color: var(--white);
+    border: none;
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    transition: all 0.2s;
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .btn-generate:hover:not(:disabled) { background: var(--slate); }
+  .btn-generate:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  .status-bar {
+    display: none;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    border-radius: 8px;
+    margin-top: 16px;
+    font-size: 0.88rem;
+    font-weight: 500;
+  }
+
+  .status-bar.loading { display: flex; background: var(--light); color: var(--navy); }
+  .status-bar.error { display: flex; background: #fdecea; color: var(--error); }
+
+  .spinner {
+    width: 18px;
+    height: 18px;
+    border: 2.5px solid var(--teal);
+    border-top-color: var(--navy);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    flex-shrink: 0;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  #previewSection { display: none; margin-top: 28px; }
+
+  .preview-actions { display: flex; gap: 12px; margin-bottom: 16px; }
+
+  .btn-download {
+    flex: 1;
+    padding: 13px;
+    background: var(--teal);
+    color: var(--navy);
+    border: none;
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.92rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-download:hover { background: #6bbfb3; }
+
+  .btn-reset {
+    padding: 13px 20px;
+    background: transparent;
+    color: var(--slate);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-reset:hover { border-color: var(--slate); color: var(--navy); }
+
+  #profilePreview {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 20px rgba(43,61,77,0.1);
+  }
+
+  .profile-doc { padding: 48px 52px; font-family: 'DM Sans', sans-serif; color: var(--navy); }
+
+  .profile-doc .logo-bar {
+    margin-bottom: 32px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid var(--light);
+  }
+
+  .profile-doc .logo-text {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.4rem;
+    color: var(--navy);
+  }
+
+  .profile-doc .logo-text span { color: var(--teal); }
+
+  .profile-doc .candidate-name {
+    font-family: 'DM Serif Display', serif;
+    font-size: 2rem;
+    color: var(--navy);
+    font-weight: 400;
+    margin-bottom: 4px;
+  }
+
+  .profile-doc .candidate-meta { font-size: 0.88rem; color: var(--slate); margin-bottom: 2px; }
+
+  .profile-doc .rate-badge {
+    display: inline-block;
+    background: var(--teal);
+    color: var(--navy);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    margin-top: 8px;
+    margin-right: 6px;
+  }
+
+  .profile-doc .avail-badge {
+    display: inline-block;
+    background: var(--light);
+    color: var(--navy);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-top: 8px;
+  }
+
+  .profile-doc .section { margin-top: 24px; }
+
+  .profile-doc .section-title {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--teal);
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1.5px solid var(--light);
+  }
+
+  .profile-doc .section-content { font-size: 0.88rem; line-height: 1.65; color: #3a4d5c; }
+  .profile-doc .section-content ul { padding-left: 18px; margin-top: 4px; }
+  .profile-doc .section-content li { margin-bottom: 3px; }
+  .profile-doc .exp-entry { margin-bottom: 16px; }
+
+  .profile-doc .exp-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  .profile-doc .exp-company { font-style: italic; font-size: 0.82rem; color: var(--slate); }
+  .profile-doc .exp-date { font-size: 0.78rem; color: var(--slate); white-space: nowrap; }
+  .profile-doc .exp-title { font-weight: 700; font-size: 0.9rem; margin: 2px 0 6px; }
+  .profile-doc .edu-line { font-style: italic; font-size: 0.88rem; color: var(--slate); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Loop · Candidate Profile Generator</h1>
+  <span>Internal Tool</span>
+</header>
+
+<div class="container">
+
+  <div class="card">
+    <div class="card-header">
+      <div class="step">1</div>
+      <h2>Upload Resume</h2>
+    </div>
+    <div class="card-body">
+      <div class="upload-zone" id="uploadZone" onclick="document.getElementById('resumeInput').click()">
+        <div class="icon">📄</div>
+        <p><strong>Click to upload</strong> or drag and drop<br>PDF resume only</p>
+        <div class="file-name" id="fileName"></div>
+      </div>
+      <input type="file" id="resumeInput" accept=".pdf" />
+    </div>
+  </div>
+
+  <div style="height:16px"></div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="step">2</div>
+      <h2>Placement Details</h2>
+    </div>
+    <div class="card-body">
+      <div class="field-row">
+        <div class="field">
+          <label>Rate / Hour <span>*</span></label>
+          <input type="text" id="rate" placeholder="e.g. $108/hr" />
+        </div>
+        <div class="field">
+          <label>Availability</label>
+          <input type="text" id="availability" placeholder="e.g. Available March 23" />
+        </div>
+      </div>
+      <div class="field-row single">
+        <div class="field">
+          <label>Client-Specific Positioning <span style="color:var(--slate);font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
+          <textarea id="positioning" placeholder="e.g. Positioned for Nexpring Health's SAP B1 modernization initiative — strong fit for their need to consolidate financial reporting across business units."></textarea>
+          <div class="hint">Leave blank to let Claude generate a general summary from the resume.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="height:16px"></div>
+
+  <button class="btn-generate" id="generateBtn" onclick="generateProfile()">
+    <span id="btnText">Generate Profile</span>
+  </button>
+
+  <div class="status-bar" id="statusBar">
+    <div class="spinner"></div>
+    <span id="statusMsg">Reading resume and generating profile...</span>
+  </div>
+
+  <div id="previewSection">
+    <div style="height:24px"></div>
+    <div class="preview-actions">
+      <button class="btn-download" onclick="downloadProfile()">⬇ Download Profile (HTML)</button>
+      <button class="btn-reset" onclick="resetForm()">Start Over</button>
+    </div>
+    <div id="profilePreview"></div>
+  </div>
+
+</div>
+
+<script>
+let resumeFile = null;
+let profileData = null;
+
+const uploadZone = document.getElementById('uploadZone');
+const resumeInput = document.getElementById('resumeInput');
+
+uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+uploadZone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  uploadZone.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type === 'application/pdf') handleFile(file);
+  else alert('Please upload a PDF file.');
+});
+
+resumeInput.addEventListener('change', (e) => {
+  if (e.target.files[0]) handleFile(e.target.files[0]);
+});
+
+function handleFile(file) {
+  resumeFile = file;
+  document.getElementById('fileName').textContent = '✓ ' + file.name;
+}
+
+async function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function setStatus(type, msg) {
+  const bar = document.getElementById('statusBar');
+  bar.className = 'status-bar ' + type;
+  document.getElementById('statusMsg').textContent = msg;
+}
+
+async function generateProfile() {
+  if (!resumeFile) { alert('Please upload a resume PDF first.'); return; }
+
+  const rate = document.getElementById('rate').value.trim();
+  const availability = document.getElementById('availability').value.trim();
+  const positioning = document.getElementById('positioning').value.trim();
+
+  const btn = document.getElementById('generateBtn');
+  btn.disabled = true;
+  document.getElementById('btnText').textContent = 'Generating...';
+  setStatus('loading', 'Reading resume and extracting candidate information...');
+  document.getElementById('previewSection').style.display = 'none';
+
+  try {
+    const pdfBase64 = await fileToBase64(resumeFile);
+
+    setStatus('loading', 'Analyzing resume with AI...');
+
+    const response = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pdfBase64, rate, availability, positioning })
+    });
+
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error || `Server error ${response.status}`);
+    }
+
+    const parsed = await response.json();
+    profileData = { ...parsed, rate, availability };
+
+    setStatus('loading', 'Building profile document...');
+    renderProfile(profileData);
+
+    document.getElementById('statusBar').style.display = 'none';
+    document.getElementById('previewSection').style.display = 'block';
+
+  } catch (err) {
+    console.error(err);
+    setStatus('error', 'Error: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    document.getElementById('btnText').textContent = 'Generate Profile';
+  }
+}
+
+function renderProfile(d) {
+  const expHtml = (d.experience || []).map(e => `
+    <div class="exp-entry">
+      <div class="exp-header">
+        <span class="exp-company">${e.company}</span>
+        <span class="exp-date">${e.dates}</span>
+      </div>
+      <div class="exp-title">${e.title}</div>
+      <ul>${(e.bullets || []).map(b => `<li>${b}</li>`).join('')}</ul>
+    </div>
+  `).join('');
+
+  const rateBadge = d.rate ? `<span class="rate-badge">${d.rate}</span>` : '';
+  const availBadge = d.availability ? `<span class="avail-badge">${d.availability}</span>` : '';
+
+  document.getElementById('profilePreview').innerHTML = `
+    <div class="profile-doc">
+      <div class="logo-bar"><div class="logo-text">Loop<span>.</span></div></div>
+      <div class="candidate-name">${d.name}</div>
+      <div class="candidate-meta">${d.location}</div>
+      <div class="candidate-meta">${d.jobTitle}</div>
+      <div>${rateBadge}${availBadge}</div>
+      <div class="section">
+        <div class="section-title">Summary</div>
+        <div class="section-content"><ul>${(d.summary||[]).map(s=>`<li>${s}</li>`).join('')}</ul></div>
+      </div>
+      <div class="section">
+        <div class="section-title">Skills</div>
+        <div class="section-content"><ul>${(d.skills||[]).map(s=>`<li>${s}</li>`).join('')}</ul></div>
+      </div>
+      <div class="section">
+        <div class="section-title">Experience</div>
+        <div class="section-content">${expHtml}</div>
+      </div>
+      <div class="section">
+        <div class="section-title">Education</div>
+        <div class="section-content edu-line">${d.education}</div>
+      </div>
+    </div>
+  `;
+}
+
+function downloadProfile() {
+  if (!profileData) return;
+  const d = profileData;
+  const name = (d.name || 'Candidate').replace(/\s+/g, '_');
+
+  const expHtml = (d.experience || []).map(e => `
+    <div class="exp-entry">
+      <div class="exp-header"><span class="exp-company">${e.company}</span><span class="exp-date">${e.dates}</span></div>
+      <div class="exp-title">${e.title}</div>
+      <ul>${(e.bullets||[]).map(b=>`<li>${b}</li>`).join('')}</ul>
+    </div>`).join('');
+
+  const html = `<!DOCTYPE html><html><head>
+    <meta charset="UTF-8">
+    <title>${d.name} – Loop Consulting Profile</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet">
+    <style>
+      body { font-family: 'DM Sans', sans-serif; color: #2b3d4d; margin: 0; padding: 40px 52px; }
+      .logo-text { font-family: 'DM Serif Display', serif; font-size: 1.4rem; color: #2b3d4d; margin-bottom: 28px; padding-bottom: 16px; border-bottom: 2px solid #d0ecef; display:block; }
+      .logo-text span { color: #87d0c5; }
+      h1 { font-family: 'DM Serif Display', serif; font-size: 1.9rem; font-weight: 400; margin-bottom: 4px; }
+      .meta { font-size: 0.86rem; color: #4e6376; margin-bottom: 2px; }
+      .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 700; margin-top: 6px; margin-right: 4px; }
+      .badge-teal { background: #87d0c5; color: #2b3d4d; }
+      .badge-light { background: #d0ecef; color: #2b3d4d; }
+      .section { margin-top: 22px; }
+      .section-title { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #87d0c5; margin-bottom: 7px; padding-bottom: 5px; border-bottom: 1.5px solid #d0ecef; }
+      ul { padding-left: 18px; margin: 4px 0; }
+      li { font-size: 0.87rem; line-height: 1.6; margin-bottom: 2px; color: #3a4d5c; }
+      .exp-entry { margin-bottom: 14px; }
+      .exp-header { display: flex; justify-content: space-between; }
+      .exp-company { font-style: italic; font-size: 0.82rem; color: #4e6376; }
+      .exp-date { font-size: 0.78rem; color: #4e6376; }
+      .exp-title { font-weight: 700; font-size: 0.9rem; margin: 2px 0 5px; }
+      .edu { font-style: italic; font-size: 0.87rem; color: #4e6376; }
+      @media print { body { padding: 20px 40px; } }
+    </style>
+  </head><body>
+    <span class="logo-text">Loop<span>.</span></span>
+    <h1>${d.name}</h1>
+    <div class="meta">${d.location}</div>
+    <div class="meta">${d.jobTitle}</div>
+    <div>${d.rate ? `<span class="badge badge-teal">${d.rate}</span>` : ''}${d.availability ? `<span class="badge badge-light">${d.availability}</span>` : ''}</div>
+    <div class="section"><div class="section-title">Summary</div><ul>${(d.summary||[]).map(s=>`<li>${s}</li>`).join('')}</ul></div>
+    <div class="section"><div class="section-title">Skills</div><ul>${(d.skills||[]).map(s=>`<li>${s}</li>`).join('')}</ul></div>
+    <div class="section"><div class="section-title">Experience</div>${expHtml}</div>
+    <div class="section"><div class="section-title">Education</div><div class="edu">${d.education}</div></div>
+  </body></html>`;
+
+  const blob = new Blob([html], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${name}_Loop_Profile.html`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function resetForm() {
+  resumeFile = null;
+  profileData = null;
+  document.getElementById('fileName').textContent = '';
+  document.getElementById('rate').value = '';
+  document.getElementById('availability').value = '';
+  document.getElementById('positioning').value = '';
+  document.getElementById('resumeInput').value = '';
+  document.getElementById('previewSection').style.display = 'none';
+  document.getElementById('statusBar').className = 'status-bar';
+}
+</script>
+</body>
+</html>
