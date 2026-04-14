@@ -69,13 +69,16 @@
   .page-divider-label { text-align: center; padding: 12px; background: var(--navy); color: var(--teal); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
 
   /* PRINT STYLES */
+  @page { margin: 16mm; size: A4; }
   @media print {
     body { background: white; }
     header, .container > .card, .btn-generate, .status-bar, .preview-actions { display: none !important; }
     #previewSection { display: block !important; margin: 0; }
     #profilePreview { border: none; box-shadow: none; border-radius: 0; }
-    .profile-page { padding: 24px 32px; }
-    .page-divider-label { page-break-before: always; }
+    .profile-page { padding: 0; }
+    .page-divider-label { page-break-before: always; padding: 8px; }
+    .section-content { font-size: 0.82rem; }
+    .candidate-name { font-size: 1.5rem; }
   }
 </style>
 </head>
