@@ -8,36 +8,47 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.post('/api/generate', async (req, res) => {
   try {
-    const { pdfBase64, rate, availability, positioning } = req.body;
+    const { pdfBase64, positioning } = req.body;
 
-    const systemPrompt = `You are an expert at creating professional candidate profile documents for Loop Consulting, an IT staffing firm. You extract structured information from resumes and format it into clean, client-ready profiles.
+    const systemPrompt = `You are an expert at creating professional candidate profile documents for Loop Consulting, an IT staffing firm.
 
 Always respond with ONLY a valid JSON object — no preamble, no markdown fences. The JSON must have exactly these fields:
+
 {
   "name": "Full Name",
   "location": "City, State",
   "jobTitle": "Current/Target Job Title",
-  "summary": ["Bullet point 1", "Bullet point 2", "Bullet point 3"],
-  "skills": ["Skill 1", "Skill 2", "Skill 3", "...up to 10 skills"],
-  "experience": [
+  "summary": ["2-4 concise bullet points highlighting candidate value proposition"],
+  "topSkills": ["6-8 most relevant skills for page 1"],
+  "topExperience": [
     {
       "company": "Company Name",
       "title": "Job Title",
       "dates": "Month Year – Month Year",
-      "bullets": ["Achievement or responsibility", "Achievement or responsibility"]
+      "bullets": ["Max 2 most impressive bullets only"]
+    }
+  ],
+  "fullSkills": "Preserve the complete skills, tools, and certifications section VERBATIM from the resume — do not paraphrase, summarize, or omit anything",
+  "fullExperience": [
+    {
+      "company": "Company Name",
+      "title": "Job Title",
+      "dates": "Month Year – Month Year",
+      "bullets": ["All bullets preserved verbatim"]
     }
   ],
   "education": "Degree, University"
 }
 
-Summary should be 2-4 concise bullet points highlighting the candidate's value proposition.
-Skills should be technical and relevant — list the most important ones.
-Experience: include up to 4 most recent/relevant roles, 2-3 bullets each.
-Keep everything factual and professional. Do not invent information.`;
+CRITICAL RULES:
+- topExperience: top 2 most recent/relevant roles, max 2 bullets each, tightened for impact
+- fullSkills: copy certifications, tools, and skills EXACTLY as written — never omit or paraphrase
+- fullExperience: all roles, all bullets preserved with full fidelity — quantified results (%, $, timeframes) must never be altered
+- summary: concise, client-facing, no fluff
+- Do not invent any information`;
 
-    const userPrompt = `Extract and format the candidate profile from this resume PDF.${rate ? `\nRate: ${rate}` : ''}${availability ? `\nAvailability: ${availability}` : ''}${positioning ? `\nClient positioning note (use as primary summary or first summary bullet if provided): ${positioning}` : ''}
-
-Return ONLY the JSON object described in your instructions.`;
+    const positioningNote = positioning ? `\nClient positioning note (incorporate as first summary bullet): ${positioning}` : '';
+    const userPrompt = `Extract and format the candidate profile from this resume PDF.${positioningNote}\n\nReturn ONLY the JSON object.`;
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -69,7 +80,6 @@ Return ONLY the JSON object described in your instructions.`;
     const rawText = data.content?.filter(b => b.type === 'text').map(b => b.text).join('');
     const clean = rawText.replace(/```json|```/g, '').trim();
     const parsed = JSON.parse(clean);
-
     res.json(parsed);
 
   } catch (err) {
