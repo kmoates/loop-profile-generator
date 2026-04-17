@@ -302,8 +302,18 @@ function downloadPDF() {
 
     const docDef = {
       pageSize: 'LETTER',
-      pageMargins: [40, 40, 40, 40],
+      pageMargins: [40, 40, 40, 48],
       defaultStyle: { font: 'Roboto', fontSize: 9.5, color: NAVY, lineHeight: 1.4 },
+
+      footer: function() {
+        return {
+          stack: [
+            { canvas: [{ type: 'line', x1: 40, y1: 0, x2: 572, y2: 0, lineWidth: 0.5, lineColor: LIGHT }] },
+            { text: 'loopconsulting.com', fontSize: 7.5, color: SLATE, alignment: 'center', characterSpacing: 0.8, margin: [0, 5, 0, 0] }
+          ]
+        };
+      },
+
       content: [
 
         // ── PAGE 1 ──────────────────────────────────────────────────────────
@@ -322,9 +332,7 @@ function downloadPDF() {
         sectionTitle('Recent Experience'),
         ...expBlock(d.topExperience),
 
-        footer(),
-
-        // ── PAGE 2 ──────────────────────────────────────────────────────────
+        // ── PAGE 2+ ─────────────────────────────────────────────────────────
         { text: '', pageBreak: 'before' },
         dividerBar(),
         { text: 'Loop Consulting.', fontSize: 13, color: NAVY, margin: [0, 0, 0, 10] },
@@ -339,9 +347,7 @@ function downloadPDF() {
         ...expBlock(d.fullExperience),
 
         sectionTitle('Education'),
-        { text: d.education || '', fontSize: 9, italics: true, color: SLATE, margin: [0, 5, 0, 0] },
-
-        footer()
+        { text: d.education || '', fontSize: 9, italics: true, color: SLATE, margin: [0, 5, 0, 0] }
       ]
     };
 
