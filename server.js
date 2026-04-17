@@ -18,8 +18,8 @@ Always respond with ONLY a valid JSON object — no preamble, no markdown fences
   "name": "Full Name",
   "location": "City, State",
   "jobTitle": "Current/Target Job Title",
-  "summary": ["2-4 concise bullet points highlighting candidate value proposition"],
-  "topSkills": ["6-8 most relevant skills for page 1"],
+"summary": ["4-5 bullets, max 20 words each, punchy and specific — no run-on sentences"],
+"topSkills": ["6-8 most relevant skills for page 1"],
   "topExperience": [
     {
       "company": "Company Name",
