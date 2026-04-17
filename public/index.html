@@ -302,15 +302,12 @@ function downloadPDF() {
 
     const docDef = {
       pageSize: 'LETTER',
-      pageMargins: [40, 48, 40, 40],
+      pageMargins: [40, 40, 40, 36],
       defaultStyle: { font: 'Roboto', fontSize: 9.5, color: NAVY, lineHeight: 1.4 },
 
-      header: function() {
+      footer: function() {
         return {
-          columns: [
-            { text: '', width: '*' },
-            { text: 'loopconsulting.com', fontSize: 7.5, color: SLATE, alignment: 'right', margin: [0, 16, 40, 0] }
-          ]
+          text: 'loopconsulting.com', fontSize: 7.5, color: SLATE, alignment: 'center', margin: [0, 8, 0, 0]
         };
       },
 
