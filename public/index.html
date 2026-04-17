@@ -70,6 +70,7 @@
   .full-skills-block { font-size: 0.83rem; line-height: 1.65; color: #3a4d5c; }
   .edu-line { font-style: italic; font-size: 0.85rem; color: var(--slate); }
   .page-divider-label { text-align: center; padding: 12px; background: var(--navy); color: var(--teal); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
+  .page-footer { margin-top: 24px; padding-top: 10px; border-top: 1px solid var(--light); text-align: center; font-size: 0.72rem; color: var(--slate); letter-spacing: 0.05em; }
 </style>
 </head>
 <body>
@@ -200,39 +201,44 @@ async function downloadPDF() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
 
-    const pageWidth = doc.internal.pageSize.getWidth();   // 215.9mm
-    const pageHeight = doc.internal.pageSize.getHeight(); // 279.4mm
+    const pdfW = doc.internal.pageSize.getWidth();   // 215.9mm
+    const pdfH = doc.internal.pageSize.getHeight();  // 279.4mm
 
-    // Capture page 1
-    const page1 = document.getElementById('profilePage1');
-    const canvas1 = await html2canvas(page1, {
+    const profileDoc = document.getElementById('profileDoc');
+    const canvas = await html2canvas(profileDoc, {
       scale: 2,
       useCORS: true,
       backgroundColor: '#ffffff',
-      logging: false
+      logging: false,
+      width: profileDoc.offsetWidth,
+      windowWidth: profileDoc.offsetWidth,
+      height: profileDoc.scrollHeight
     });
 
-    const img1 = canvas1.toDataURL('image/jpeg', 0.95);
-    const ratio1 = canvas1.height / canvas1.width;
-    const imgH1 = pageWidth * ratio1;
-    doc.addImage(img1, 'JPEG', 0, 0, pageWidth, imgH1);
+    // mm per canvas pixel
+    const mmPerPx = pdfW / canvas.width;
+    // how many canvas pixels fit in one PDF page height
+    const pageHeightPx = pdfH / mmPerPx;
+    const totalPages = Math.ceil(canvas.height / pageHeightPx);
 
-    // Capture page 2
-    const page2 = document.getElementById('profilePage2');
-    const canvas2 = await html2canvas(page2, {
-      scale: 2,
-      useCORS: true,
-      backgroundColor: '#ffffff',
-      logging: false
-    });
+    for (let i = 0; i < totalPages; i++) {
+      if (i > 0) doc.addPage();
 
-    doc.addPage();
-    const img2 = canvas2.toDataURL('image/jpeg', 0.95);
-    const ratio2 = canvas2.height / canvas2.width;
-    const imgH2 = pageWidth * ratio2;
-    doc.addImage(img2, 'JPEG', 0, 0, pageWidth, imgH2);
+      const srcY = i * pageHeightPx;
+      const sliceH = Math.min(pageHeightPx, canvas.height - srcY);
 
-    // Name the file after the candidate
+      const slice = document.createElement('canvas');
+      slice.width = canvas.width;
+      slice.height = Math.ceil(pageHeightPx); // full page height
+      const ctx = slice.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, slice.width, slice.height);
+      ctx.drawImage(canvas, 0, srcY, canvas.width, sliceH, 0, 0, canvas.width, sliceH);
+
+      const sliceData = slice.toDataURL('image/jpeg', 0.95);
+      doc.addImage(sliceData, 'JPEG', 0, 0, pdfW, pdfH);
+    }
+
     const candidateName = (profileData?.name || 'Profile').replace(/\s+/g, '_');
     doc.save(`Loop_${candidateName}_Profile.pdf`);
 
@@ -279,6 +285,7 @@ function renderProfile(d) {
           <div class="section-title">Recent Experience</div>
           <div class="section-content">${topExpHtml}</div>
         </div>
+        <div class="page-footer">loopconsulting.com</div>
       </div>
 
       <div class="page-divider-label">Full Technical Detail</div>
@@ -299,6 +306,7 @@ function renderProfile(d) {
           <div class="section-title">Education</div>
           <div class="section-content edu-line">${d.education}</div>
         </div>
+        <div class="page-footer">loopconsulting.com</div>
       </div>
     </div>`;
 }
