@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Loop Profile Generator</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   :root { --navy: #2b3d4d; --teal: #87d0c5; --slate: #4e6376; --light: #d0ecef; --white: #ffffff; --border: #dde4e8; --error: #c0392b; --success: #27ae60; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -43,13 +45,14 @@
   .preview-actions { display: flex; gap: 12px; margin-bottom: 16px; }
   .btn-print { flex: 1; padding: 13px; background: var(--teal); color: var(--navy); border: none; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.92rem; font-weight: 700; cursor: pointer; transition: all 0.2s; }
   .btn-print:hover { background: #6bbfb3; }
+  .btn-print:disabled { opacity: 0.6; cursor: not-allowed; }
   .btn-reset { padding: 13px 20px; background: transparent; color: var(--slate); border: 1.5px solid var(--border); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; font-weight: 500; cursor: pointer; transition: all 0.2s; }
   .btn-reset:hover { border-color: var(--slate); color: var(--navy); }
   #profilePreview { background: var(--white); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; box-shadow: 0 2px 20px rgba(43,61,77,0.1); }
 
   /* PROFILE DOC */
   .profile-doc { font-family: 'DM Sans', sans-serif; color: var(--navy); }
-  .profile-page { padding: 36px 44px; }
+  .profile-page { padding: 36px 44px; background: white; }
   .doc-logo { font-family: 'DM Serif Display', serif; font-size: 1.2rem; color: var(--navy); letter-spacing: 0.04em; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 2px solid var(--light); }
   .doc-logo span { color: var(--teal); }
   .candidate-name { font-family: 'DM Serif Display', serif; font-size: 1.8rem; color: var(--navy); font-weight: 400; margin-bottom: 3px; }
@@ -67,19 +70,6 @@
   .full-skills-block { font-size: 0.83rem; line-height: 1.65; color: #3a4d5c; }
   .edu-line { font-style: italic; font-size: 0.85rem; color: var(--slate); }
   .page-divider-label { text-align: center; padding: 12px; background: var(--navy); color: var(--teal); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
-
-  /* PRINT STYLES */
-  @page { margin: 16mm; size: A4; }
-  @media print {
-    body { background: white; }
-    header, .container > .card, .btn-generate, .status-bar, .preview-actions { display: none !important; }
-    #previewSection { display: block !important; margin: 0; }
-    #profilePreview { border: none; box-shadow: none; border-radius: 0; }
-    .profile-page { padding: 0; }
-    .page-divider-label { page-break-before: always; padding: 8px; }
-    .section-content { font-size: 0.82rem; }
-    .candidate-name { font-size: 1.5rem; }
-  }
 </style>
 </head>
 <body>
@@ -107,7 +97,7 @@
     <div class="card-body">
       <div class="field">
         <label>Client-Specific Positioning <span style="color:var(--slate);font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
-        <textarea id="positioning" placeholder="e.g. Positioned for Nexpring Health’s SAP B1 modernization initiative — strong fit for their need to consolidate financial reporting across business units."></textarea>
+        <textarea id="positioning" placeholder="e.g. Positioned for Nexpring Health's SAP B1 modernization initiative — strong fit for their need to consolidate financial reporting across business units."></textarea>
         <div class="hint">Leave blank to let Claude generate a general summary from the resume.</div>
       </div>
     </div>
@@ -125,7 +115,7 @@
   <div id="previewSection">
     <div style="height:24px"></div>
     <div class="preview-actions">
-      <button class="btn-print" onclick="window.print()">🖨 Print / Save as PDF</button>
+      <button class="btn-print" id="downloadBtn" onclick="downloadPDF()">⬇ Download PDF</button>
       <button class="btn-reset" onclick="resetForm()">Start Over</button>
     </div>
     <div id="profilePreview"></div>
@@ -201,6 +191,60 @@ async function generateProfile() {
   }
 }
 
+async function downloadPDF() {
+  const btn = document.getElementById('downloadBtn');
+  btn.disabled = true;
+  btn.textContent = 'Generating PDF...';
+
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
+
+    const pageWidth = doc.internal.pageSize.getWidth();   // 215.9mm
+    const pageHeight = doc.internal.pageSize.getHeight(); // 279.4mm
+
+    // Capture page 1
+    const page1 = document.getElementById('profilePage1');
+    const canvas1 = await html2canvas(page1, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#ffffff',
+      logging: false
+    });
+
+    const img1 = canvas1.toDataURL('image/jpeg', 0.95);
+    const ratio1 = canvas1.height / canvas1.width;
+    const imgH1 = pageWidth * ratio1;
+    doc.addImage(img1, 'JPEG', 0, 0, pageWidth, imgH1);
+
+    // Capture page 2
+    const page2 = document.getElementById('profilePage2');
+    const canvas2 = await html2canvas(page2, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#ffffff',
+      logging: false
+    });
+
+    doc.addPage();
+    const img2 = canvas2.toDataURL('image/jpeg', 0.95);
+    const ratio2 = canvas2.height / canvas2.width;
+    const imgH2 = pageWidth * ratio2;
+    doc.addImage(img2, 'JPEG', 0, 0, pageWidth, imgH2);
+
+    // Name the file after the candidate
+    const candidateName = (profileData?.name || 'Profile').replace(/\s+/g, '_');
+    doc.save(`Loop_${candidateName}_Profile.pdf`);
+
+  } catch (err) {
+    console.error(err);
+    alert('PDF generation failed: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '⬇ Download PDF';
+  }
+}
+
 function renderProfile(d) {
   const topExpHtml = (d.topExperience || []).map(e => `
     <div class="exp-entry">
@@ -218,7 +262,7 @@ function renderProfile(d) {
 
   document.getElementById('profilePreview').innerHTML = `
     <div class="profile-doc" id="profileDoc">
-      <div class="profile-page">
+      <div class="profile-page" id="profilePage1">
         <div class="doc-logo">Loop Consulting.</div>
         <div class="candidate-name">${d.name}</div>
         <div class="candidate-meta">${d.location}</div>
@@ -239,7 +283,7 @@ function renderProfile(d) {
 
       <div class="page-divider-label">Full Technical Detail</div>
 
-      <div class="profile-page">
+      <div class="profile-page" id="profilePage2">
         <div class="doc-logo">Loop Consulting.</div>
         <div class="candidate-name">${d.name}</div>
         <div class="candidate-meta">${d.jobTitle}</div>
