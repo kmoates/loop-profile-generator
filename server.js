@@ -76,11 +76,16 @@ CRITICAL RULES:
       const clean = rawText.replace(/```json|```/g, '').trim();
       const jsonMatch = clean.match(/\{[\s\S]*\}/);
       if (!jsonMatch) throw new Error('No JSON object found in response');
-      const sanitized = jsonMatch[0]
-        .replace(/[\u0000-\u001F\u007F]/g, ' ')
-        .replace(/\n/g, ' ')
-        .replace(/\r/g, ' ')
-        .replace(/\t/g, ' ');
+    const sanitized = jsonMatch[0]
+  .replace(/[\u0000-\u001F\u007F]/g, ' ')
+  .replace(/\n/g, ' ')
+  .replace(/\r/g, ' ')
+  .replace(/\t/g, ' ')
+  .replace(/[\u2018\u2019]/g, "'")   // smart single quotes
+  .replace(/[\u201C\u201D]/g, '"')   // smart double quotes
+  .replace(/[\u2013\u2014]/g, '-')   // en/em dashes
+  .replace(/\u2026/g, '...')         // ellipsis
+  .replace(/[^\x00-\x7F]/g, ' ');   // catch-all for any remaining non-ASCII
       parsed = JSON.parse(sanitized);
     } catch (parseErr) {
       console.error('JSON parse failed:', parseErr.message);
