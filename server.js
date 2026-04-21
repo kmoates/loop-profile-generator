@@ -10,7 +10,7 @@ app.post('/api/generate', async (req, res) => {
 
 You will receive a resume PDF. It may be a raw candidate resume, a pre-formatted staffing agency document, or any other format. Regardless of input format, extract the candidate's information and return it in the required JSON structure below.
 
-Always respond with ONLY a valid JSON object — no preamble, no markdown fences. The JSON must have exactly these fields:
+Always respond with ONLY a valid JSON object — no preamble, no markdown fences. IMPORTANT: Ensure all string values are properly escaped. Do not use double quotes inside string values. The JSON must have exactly these fields:
 {
   "name": "Full Name",
   "location": "City, State",
@@ -53,7 +53,7 @@ CRITICAL RULES:
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 4096,
+        max_tokens: 8192,
         system: systemPrompt,
         messages: [{
           role: 'user',
