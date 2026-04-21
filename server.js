@@ -78,8 +78,9 @@ CRITICAL RULES:
 
     const data = await response.json();
     const rawText = data.content?.filter(b => b.type === 'text').map(b => b.text).join('');
-    const clean = rawText.replace(/```json|```/g, '').trim();
-    const parsed = JSON.parse(clean);
+ const clean = rawText.replace(/```json|```/g, '').trim();
+const sanitized = clean.replace(/[\u0000-\u001F\u007F]/g, ' ');
+const parsed = JSON.parse(sanitized);
     res.json(parsed);
 
   } catch (err) {
