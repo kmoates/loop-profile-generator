@@ -7,7 +7,9 @@ app.post('/api/generate', async (req, res) => {
   try {
     const { pdfBase64, positioning } = req.body;
     const systemPrompt = `You are an expert at creating professional candidate profile documents for Loop Consulting, an IT staffing firm.
+
 You will receive a resume PDF. It may be a raw candidate resume, a pre-formatted staffing agency document, or any other format. Regardless of input format, extract the candidate's information and return it in the required JSON structure below.
+
 Always respond with ONLY a valid JSON object — no preamble, no markdown fences. The JSON must have exactly these fields:
 {
   "name": "Full Name",
