@@ -3,8 +3,10 @@ const fetch = require('node-fetch');
 const path = require('path');
 const app = express();
 app.use(express.json({ limit: '20mb' }));
-app.use(express.static(path.join(__dirname, 'public')));
-app.post('/api/generate', async (req, res) => {
+app.post('/api/generate', async (req, res) => {  // route first
+  ...
+});
+app.use(express.static(path.join(__dirname, 'public')));  // static last
   try {
     const { pdfBase64, positioning } = req.body;
     const systemPrompt = `You are an expert at creating professional candidate profile documents for Loop Consulting, an IT staffing firm.
